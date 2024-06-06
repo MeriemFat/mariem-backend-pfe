@@ -6,8 +6,6 @@ const bcrypt = require("bcrypt");
 const asyncHandler = require('express-async-handler')
 const templateMail = require('../../config/templateMail.js');
 const RoleRequest = require('../../Shema/RoleRequest.js')
-const twilio = require('twilio');
-const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const RequestedRole = {
     ACCEPTED:'ACCEPTED',
@@ -42,36 +40,28 @@ const loginUser = async (req, res) => {
 
         user.password = '';
 
-        // Send SMS
-        await client.messages.create({
-            body: `Hello ${user.fullname}, you have successfully logged in.`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: user.phone
-        });
-
         const accessToken = jwt.sign(
             {
                 user: {
                     codeClient: user.codeClient,
                     codeAgent: user.codeAgent,
                     Nom: user.Nom,
-                    prenom: user.prenom, 
+                    prenom: user.prenom,
                     phone: user.phone,
-                    adresse:user.adresse, 
-                    password: user.password,
-                    email: user.email, 
-                    cin:user.cin, 
-                    typePerson:user.typePerson, 
-                    ville:user.ville, 
-                    codePostal:user.codePostal, 
-                    typeIdentifiant:user.typeIdentifiant, 
-                    dateCreation:user.dateCreation, 
-                    dateDernierMiseAjour:user.dateDernierMiseAjour,
-                    dateValidite:user.dateValidite,  
-                    roles:user.roles, 
-                    codeParent:user.codeParent, 
-                    avatar:user.avatar, 
-                    identifiant:user.identifiant, 
+                    adresse: user.adresse,
+                    email: user.email,
+                    cin: user.cin,
+                    typePerson: user.typePerson,
+                    ville: user.ville,
+                    codePostal: user.codePostal,
+                    typeIdentifiant: user.typeIdentifiant,
+                    dateCreation: user.dateCreation,
+                    dateDernierMiseAjour: user.dateDernierMiseAjour,
+                    dateValidite: user.dateValidite,
+                    roles: user.roles,
+                    codeParent: user.codeParent,
+                    avatar: user.avatar,
+                    identifiant: user.identifiant
                 }
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -80,31 +70,33 @@ const loginUser = async (req, res) => {
 
         const refreshToken = jwt.sign(
             {
-                "_id": user._id
+                _id: user._id
             },
             process.env.REFRESH_TOKEN_SECRET,
             { expiresIn: '7d' }
         );
 
         res.cookie('jwt', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'None',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
-        res.json({ accessToken });
+        res.json({ accessToken,user });
     } catch (error) {
+        console.error("Authentication error:", error);
         res.status(400).json({ error: error.message });
     }
 };
 
-
 const signupUser = async (req, res) => {
     const {codeClient , codeAgent , Nom,prenom,phone,adresse,password, email,cin, typePerson , 
-        ville, codePostal, typeIdentifiant,dateCreation, dateDernierMiseAjour, dateValidite, roles, codeParent , avatar, identifiant} = req.body;
+        ville, codePostal, typeIdentifiant,dateCreation, dateDernierMiseAjour, dateValidite, codeParent , avatar, identifiant} = req.body;
 
     try {
         const user = await User.signup(codeClient , codeAgent , Nom,prenom,phone,adresse,password, email,cin, typePerson , 
-            ville, codePostal, typeIdentifiant,dateCreation, dateDernierMiseAjour, dateValidite, roles, codeParent , avatar, identifiant);
+            ville, codePostal, typeIdentifiant,dateCreation, dateDernierMiseAjour, dateValidite, codeParent , avatar, identifiant);
 
         user.secret = '';
 
@@ -151,9 +143,33 @@ const signupUser = async (req, res) => {
             sameSite: 'None',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
-
-        res.status(200).json({ accessToken });
+        // Envoyer les informations de l'utilisateur et le token d'accès dans la réponse
+        res.status(200).json({
+            user: {
+                codeClient: user.codeClient,
+                codeAgent: user.codeAgent,
+                Nom: user.Nom,
+                prenom: user.prenom,
+                phone: user.phone,
+                adresse: user.adresse,
+                email: user.email,
+                cin: user.cin,
+                typePerson: user.typePerson,
+                ville: user.ville,
+                codePostal: user.codePostal,
+                typeIdentifiant: user.typeIdentifiant,
+                dateCreation: user.dateCreation,
+                dateDernierMiseAjour: user.dateDernierMiseAjour,
+                dateValidite: user.dateValidite,
+                roles: user.roles,
+                codeParent: user.codeParent,
+                avatar: user.avatar,
+                identifiant: user.identifiant,
+            },
+            accessToken
+        });
     } catch (error) {
+        console.log(error);
         res.status(400).json({ error: error.message });
     }
 };
@@ -259,10 +275,30 @@ const changePassword = async (req, res) => {
         res.status(401).json({error: e.message})
     }
 }
+
+
+const getUserByCodeAgent = async (req, res) => {
+    const { codeAgent } = req.params;
+    console.log('Received codeAgent:', codeAgent);
+  
+    try {
+      const user = await User.findOne({ codeAgent: codeAgent });
+      if (!user) {
+        console.log('User not found for codeAgent:', codeAgent);
+        return res.status(404).json({ message: 'User not found' });
+      }
+      console.log('User found:', user);
+      res.json(user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
 module.exports = {
     loginUser,
     signupUser,
     updateRoleUser,
     resetPassword,
-    changePassword 
+    changePassword , 
+    getUserByCodeAgent
 }
