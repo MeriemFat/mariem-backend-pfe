@@ -5,12 +5,6 @@ const demandeSchema = mongoose.Schema({
         type: String,
         enum : ['Envoyer' , 'En Cours De Traitement'  ,'Traiter'], 
     }, 
-    nom: {
-        type: String,
-        required: true,
-        // Message d'erreur personnalisé (facultatif)
-        required: [true, 'Le nom est requis.']
-    },
     email: {
         type: String,
         required: true,
@@ -24,6 +18,16 @@ const demandeSchema = mongoose.Schema({
     TypeDemande: { 
         type: String , 
         enum: ['Demande', 'Reclamation' , 'Modification' , 'Autre'], 
+    } , 
+    codeClient: {
+        type: String,
+        required: true,
+        ref: 'User' 
+    }, 
+    codeAgent:{ 
+        type:String, 
+        required:true, 
+        ref:'User'
     }
 });
 

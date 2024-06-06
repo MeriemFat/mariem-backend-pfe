@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const { json } = require('express');
@@ -6,7 +7,7 @@ const morgan = require('morgan');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware.js');
 const db = require('./config/db.js');
 const userRouter = require("./api/routes/UserRoute.js");
-const catalogueRoute = require ("./api/routes/catalogueRoute.js"); 
+const catalogueRoute = require ('./api/routes/catalogueRoute.js'); 
 const contratRoute = require("./api/routes/contratRoute.js"); 
 const produitRoute = require("./api/routes/produitRoute.js"); 
 const sinistreRoute = require("./api/routes/SinistreRoute.js");
@@ -37,13 +38,11 @@ app.get('/', (req, res) => {
  
 app.use('/api/contrat', contratRoute); 
 app.use('/api/demande',demandeRoute); 
-// Servir les fichiers statiques du dossier uploads
-// Middleware pour parser le body des requêtes POST
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Servir les fichiers statiques du dossier uploads
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// Utiliser les routes définies dans le fichier catalogueRoute.js
 app.use('/api/categorie',catalogueRoute); 
 app.use('/api/produit',produitRoute)
 app.use('/api/sinistres', sinistreRoute); 

@@ -1,8 +1,17 @@
 // create Node.js server application
 const express = require("express");
 const cors = require('cors'); 
+
 const app = express();
 app.use(cors());
+// Middleware CORS
+app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 app.use(express.json());
 app.listen(3001, () => {
   console.log("The server is active on port 3001");
@@ -26,6 +35,7 @@ const produit = require("./Shema/Produit.js");
 const quittance = require("./Shema/Quittance");
 const user = require("./Shema/User");
 const rolerequest = require ("./Shema/RoleRequest.js"); 
+const chat = require("./Shema/Chat.js"); 
 // Using schema to build Mongoose models
 const mongoose = require("mongoose");
 // Création des modèles Mongoose à partir des schémas
@@ -41,4 +51,5 @@ module.exports = {
   User: user,
   Contrat: contrat,
   RoleRequest:rolerequest, 
+  Chat:chat 
 };

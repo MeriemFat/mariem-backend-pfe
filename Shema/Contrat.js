@@ -12,8 +12,9 @@ codeClient: {
     ref: 'User' 
 },
  codeAgent:{
-    type :String,
-     required:true
+  type: String,
+    required: true,
+    ref: 'User' 
 }, 
  libelleBreanche:{
     type:String, 
@@ -29,6 +30,14 @@ dateEchanceProchaine:{
 typePersonne:{
     type:Date ,
      required:true
+    }, 
+    numSinistre: {
+        type: String,
+        ref: 'Sinistre' // Référence au modèle Sinistre
+    }, 
+    numContrat: {
+        type: String,
+        required: true
     }
 }); 
 const Contrat = mongoose.model('Contrat', contrat);

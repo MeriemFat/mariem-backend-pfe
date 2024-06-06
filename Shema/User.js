@@ -9,7 +9,10 @@ const Role = {
     USER: 1,
     AGENT: 20
 };
-
+const TypePersonne = {
+    Soc: 'Société',
+    PERS: 'Personne physique'
+}; 
 const RequestedRole = {
     ACCEPTED: 'ACCEPTED',
     REJECTED: 'REJECTED',
@@ -27,13 +30,24 @@ const User =  Schema({
     password:String , 
     email:String , 
     cin: String,
-	typePerson:String , 
+	typePerson:[{type:String , 
+        enum:Object.values(TypePersonne), 
+        default:TypePersonne.PERS
+}] , 
 	ville:String, 
 	codePostal:String , 
 	typeIdentifiant:String , 
-	dateCreation:String , 
-	dateDernierMiseAjour:String , 
-	dateValidite:String ,
+    dateCreation: {
+        type: Date,
+        default: Date.now
+    },
+    dateDernierMiseAjour: {
+        type: Date,
+        default: Date.now
+    },
+	dateValidite: {type: Date,
+    default: Date.now
+    },
     roles: [{
         type: Number,
         enum: Object.values(Role),
@@ -77,11 +91,11 @@ User.statics.login = async function(email, password) {
 
 User.statics.signup = async function(codeClient,codeAgent,Nom,prenom,phone,
 	adresse,password,email,cin,typePerson,ville, codePostal,typrIdentifiant,
-	dateCreation,dateDernierMiseAjour,dateValidite,roles,codeParent,identifiant,TypePerson) {
+	dateCreation,dateDernierMiseAjour,dateValidite,codeParent,identifiant,TypePerson) {
 
-    if (!codeClient || !codeAgent || !Nom||!prenom||!phone||!roles) {
-        throw new Error('All fields must be filled');
-    }
+    // if (!codeClient || !codeAgent || !Nom||!prenom||!phone) {
+    //     throw new Error('All fields must be filled');
+    // }
     if (!validator.isEmail(email)) {
         throw new Error('Email not valid');
     }

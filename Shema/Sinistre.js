@@ -13,14 +13,16 @@ const sinistre =  mongoose.Schema({
         type:String,
         required:true
     },
-    codeClient:{ 
-        type:String, 
-        required: true 
+    codeClient: {
+        type: String,
+        required: true,
+        ref: 'Contrat' 
     },
-    codeAgent: {
-        type:String, 
-        required: true 
-    },
+     codeAgent:{
+        type: String,
+        required: true,
+        ref: 'Contrat' 
+    }, 
     restRegler: {
         type: Date ,
          require:true
@@ -37,6 +39,11 @@ const sinistre =  mongoose.Schema({
     user : {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    }, 
+    contratId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Contrat', // Nom du modèle référencé (Contrat)
+        required: true
     }
 });
 const Sinistre = mongoose.model("Sinistre", sinistre);

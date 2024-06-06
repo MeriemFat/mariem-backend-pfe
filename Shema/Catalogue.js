@@ -3,9 +3,9 @@ const mongoose = require("mongoose");
 const Catalogue =  mongoose.Schema({ 
     codeBranche:String , 
     libellerBranche:String, 
-    TypeProduit:{ 
-        type:String , 
-        enum:['profesionnelle, particulier'], 
+    photo: {
+        type: String,
+        required: false
     }
 }); 
 const catalogue = mongoose.model("catalogue", Catalogue)

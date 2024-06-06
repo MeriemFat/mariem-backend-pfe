@@ -12,18 +12,18 @@ const quittance =  mongoose.Schema({
         unique: true,
         required: true
     },
-   
-    codeAgence: {
+    codeAgent:{
         type: String,
-        required: true
-    },
+        required: true,
+        ref: 'Contrat' 
+    },  
     dateMutDu: {
         type: Date,
         required: true
     },
     
     dateMutAu: {
-        type: Number,
+        type: Date,
         required: true
     },
     primeTotal: {
@@ -38,6 +38,11 @@ const quittance =  mongoose.Schema({
     user : {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    }, 
+    contratId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Contrat', // Nom du modèle référencé (Contrat)
+        required: true
     }
 });
 const Quittance = mongoose.model('Quittance', quittance);
