@@ -4,18 +4,20 @@ const { json } = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware.js');
-const connectDB = require('../Backend/config/db.js');
+const db = require('./config/db.js');
 const userRouter = require("./api/routes/UserRoute.js");
-//const agentRoute = require('../Backend/api/routes/AgentRoute.js');
+const catalogueRoute = require ("./api/routes/catalogueRoute.js"); 
 const contratRoute = require("./api/routes/contratRoute.js"); 
-//const sinistreRoute = require("./api/routes/SinistreRoute.js");
-//const quittanceRoute = require("./api/routes/QuittanceRoute.js"); 
-//const demandeRoute = require("./api/routes/DemandeRoute.js"); 
+const produitRoute = require("./api/routes/produitRoute.js"); 
+const sinistreRoute = require("./api/routes/SinistreRoute.js");
+const quittanceRoute = require("./api/routes/QuittanceRoute.js"); 
+const demandeRoute = require("./api/routes/DemandeRoute.js"); 
+const chatRoute=require("./api/routes/ChatRoute.js"); 
 const colors = require('colors'); 
 dotenv.config();
 
 // Invoke connectDB
-connectDB();
+db();
 
 const app = express();
 
@@ -33,14 +35,21 @@ app.get('/', (req, res) => {
     res.send('API is running...');
 });
  
-//_________________________________________________Contrat___________________________________________________________//
 app.use('/api/contrat', contratRoute); 
-//_____________________________________________Sinistre______________________________________________________________//
-//app.use('/api/sinistres', sinistreRoute); 
-//_____________________________________________Quittance___________________________________________________________//
-//app.use('/api/quittance', quittanceRoute); 
-//_____________________________________Demande__________________________//
-//app.use('/api/demande',demandeRoute); 
+app.use('/api/demande',demandeRoute); 
+// Servir les fichiers statiques du dossier uploads
+// Middleware pour parser le body des requêtes POST
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// Servir les fichiers statiques du dossier uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Utiliser les routes définies dans le fichier catalogueRoute.js
+app.use('/api/categorie',catalogueRoute); 
+app.use('/api/produit',produitRoute)
+app.use('/api/sinistres', sinistreRoute); 
+app.use('/api/quittance', quittanceRoute); 
+app.use('/api/chat', chatRoute); 
+
 // Error middleware for 404
 app.use(notFound);
 
@@ -48,7 +57,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Set port number
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 5100;
 
 app.listen(
 	PORT,
