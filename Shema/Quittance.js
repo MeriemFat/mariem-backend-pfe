@@ -32,7 +32,6 @@ const quittance =  mongoose.Schema({
     },
     EtatMvt: {
         type: String,
-        required: true,
         enum: etatReglementQuittance // Utiliser enum pour valider les valeurs
     }, 
     user : {
@@ -42,7 +41,7 @@ const quittance =  mongoose.Schema({
     contratId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Contrat', // Nom du modèle référencé (Contrat)
-        required: true
+    
     }
 });
 const Quittance = mongoose.model('Quittance', quittance);

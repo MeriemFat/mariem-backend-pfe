@@ -31,15 +31,25 @@ const addDemandeByCodeClient = async (req, res) => {
     }
   };
 
-const getAllDemande = async (req, res) => {
+  const getAllDemande = async (req, res) => {
     try {
-      const demandes = await Demande.find().exec();
-      res.json(demandes);
+        const demandes = await Demande.find();
+
+        // Mettre à jour etatDemande à 'En Cours De Traitement' si nécessaire
+        const updatedDemandes = demandes.map(demandes => {
+            if (!demandes.etatDemande) {
+                demandes.etatDemande = 'En Cours De Traitement';
+                demandes.save();  // Sauvegarder les changements dans la base de données
+            }
+            return demandes;
+        });
+
+        res.status(200).json(updatedDemandes);
     } catch (error) {
-      console.error("Erreur lors de la récupération de toutes les demandes :", error.message);
-      res.status(500).json({ message: "Erreur lors de la récupération de toutes les demandes." });
+        console.error('Erreur lors de la récupération des demandes:', error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des demandes', error });
     }
-  };
+};
 
   const getDemandeByCodeClient = async (req, res) => {
     const codeClient = req.params.codeClient;
@@ -53,37 +63,41 @@ const getAllDemande = async (req, res) => {
   };
 
 // Fonction pour répondre aux demandes par e-mail
-const repondreDemandeParEmailByCodeClient = async (codeClient, reponse) => {
-    try {
-        // Récupérer la demande du code client spécifié
-        const demande = await Demande.findOne({ codeClient: codeClient });
+const repondreDemandeParEmailByCodeClient = async (req, res) => {
+  const codeClient = req.params.codeClient;
+  const reponse = req.body.reponse;
 
-        if (!demande) {
-            console.error('Demande non trouvée pour le code client:', codeClient);
-            throw new Error('Demande non trouvée pour le code client: ' + codeClient);
-        }
+  try {
+      // Récupérer la demande du code client spécifié
+      const demande = await Demande.findOne({ codeClient: codeClient }).exec();
 
-        // Paramètres de l'e-mail
-        const mailOptions = {
-            from: 'meriam.fathallah@takaful.tn',
-            to: demande.email,
-            subject: 'Réponse à votre demande',
-            text: reponse 
-        };
+      if (!demande) {
+          console.error('Demande non trouvée pour le code client:', codeClient);
+          return res.status(404).json({ message: 'Demande non trouvée pour le code client: ' + codeClient });
+      }
+      demande.etatDemande = 'Traiter';
+      await demande.save();
 
-        // Envoyer l'e-mail
-        transporter.sendMail(mailOptions, function(error, info){
-            if (error) {
-                console.error('Erreur lors de l\'envoi de l\'e-mail:', error);
-            } else {
-                console.log('E-mail envoyé avec succès:', info.response);
-            }
-        });
-    } catch (error) {
-        console.error('Erreur lors de la réponse à la demande par e-mail:', error.message);
-        throw new Error('Erreur lors de la réponse à la demande par e-mail');
-    }
+      // Paramètres de l'e-mail
+      const mailOptions = {
+          from: 'meriam.fathallah@takaful.tn',
+          to: demande.email,
+          subject: 'Réponse à votre demande',
+          text: reponse 
+      };
+
+      // Envoyer l'e-mail
+      await transporter.sendMail(mailOptions);
+
+      // Répondre avec un message de succès
+      res.status(200).json({ message: 'E-mail envoyé avec succès' });
+
+  } catch (error) {
+      console.error('Erreur lors de la réponse à la demande par e-mail:', error.message);
+      res.status(500).json({ message: 'Erreur lors de la réponse à la demande par e-mail: ' + error.message });
+  }
 };
+
 
 const addDemandeByCodeAgent = async (req, res) => {
   const codeAgent = req.params.codeAgent;

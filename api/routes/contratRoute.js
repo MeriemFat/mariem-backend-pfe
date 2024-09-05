@@ -7,16 +7,7 @@ router.get('/getContratByCodeClient/:codeClient',contratController.getContratsBy
 router.get('/getContratById/:id',contratController.getContratById);
 router.get('/getContratByCodeClientbyvariable/:codeClient',contratController.getContratsByCodeClientVariable); 
 // Route pour consulter tous les contrats
-router.get('/getAllContrats', async (req, res) => {
-    try {
-        const contrats = await contratController.getAllContrats();
-        console.log("Contrats récupérés :", contrats); // Affichez les contrats récupérés dans la console
-        res.status(200).json(contrats);
-    } catch (error) {
-        console.error("Erreur lors de la récupération de tous les contrats :", error.message);
-        res.status(500).json({ error: "Erreur lors de la récupération de tous les contrats" });
-    }
-});
+router.get('/getAllContrats',contratController.getAllContrats);
 
 // Route pour consulter les contrats par agent
 router.get('/contrats/code-agent/:codeAgent',contratController.getContractByCodeAgent);
@@ -50,4 +41,7 @@ router.get('/getAllContratsAndQuittanceByCodeClient/:codeAgent', async (req, res
     }
 });
 
+router.post('/AjouterContrat' , contratController.AjouterContrat); 
+router.put('/ModifierContrat/:id', contratController.updateContrat); 
+router.delete('/supprimerContrat/:id', contratController.deleteContrat); 
 module.exports = router;

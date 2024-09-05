@@ -1,17 +1,17 @@
 // create Node.js server application
 const express = require("express");
 const cors = require('cors'); 
-
 const app = express();
-app.use(cors());
+//app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000' }));
 // Middleware CORS
-app.use(express.json());
-app.use((req, res, next) => {
+//app.use(express.json());
+/*app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
-});
+});*/
 app.use(express.json());
 app.listen(3001, () => {
   console.log("The server is active on port 3001");

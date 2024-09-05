@@ -51,6 +51,103 @@ const getSinistreById = async (req, res) => {
     }
 };
 
+const getAllSinistres = async (req, res) => {
+    try {
+      const sinistre = await Sinistre.find();
+      res.status(200).json(sinistre);
+    } catch (error) {
+      res.status(500).json({ message: 'Erreur lors de la récupération des sinistres', error });
+    }
+  };
+  
+  const AjouterSinistre = async (req, res) => {
+      try {
+          const { codeClient,numSinistre, numPolice, codeAgent, restRegler, etatSinistre, libellerMouvementSinistre} = req.body;
+  
+          // Créer une nouvelle instance de Sinistre
+          const nouveauSinistre = new Sinistre({
+            codeClient,  
+            numSinistre,
+            numPolice,
+            codeAgent,
+            restRegler,
+            etatSinistre,
+            libellerMouvementSinistre
+          });
+  
+          // Sauvegarder le sinistre dans la base de données
+          const sinistreSauvegarde = await nouveauSinistre.save();
+  
+          // Envoyer une réponse de succès avec les données du sinistre sauvegardé
+          res.status(200).json({
+              message: 'Sinistre ajouté avec succès',
+              sinistre: sinistreSauvegarde
+          });
+      } catch (error) {
+          // Gérer les erreurs et envoyer une réponse d'erreur
+          res.status(500).json({
+              message: 'Erreur lors de l\'ajout du sinistre',
+              error: error.message
+          });
+      }
+  };
 
 
-module.exports = { getSinistreByCodeClient , getSinistreById};
+  const UpdateSinistre = async (req, res) => {
+      try {
+          const sinistreId = req.params.id;
+          const {codeClient,numSinistre, numPolice, codeAgent, restRegler, etatSinistre, libellerMouvementSinistre,contratId} = req.body;
+  
+          // Trouver le sinistre par ID et mettre à jour ses champs
+          const sinistreMisAJour = await Sinistre.findByIdAndUpdate(
+              sinistreId,
+              {
+                  codeClient,  
+                  numSinistre,
+                  numPolice,
+                  codeAgent,
+                  restRegler,
+                  etatSinistre,
+                  libellerMouvementSinistre,
+                  contratId
+              },
+              { new: true, runValidators: true } // Options pour retourner le document mis à jour et exécuter les validateurs
+          );
+  
+          if (!sinistreMisAJour) {
+              return res.status(404).json({ message: 'Sinistre non trouvé' });
+          }
+  
+          res.status(200).json(sinistreMisAJour);
+      } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: 'Erreur lors de la mise à jour du sinistre' });
+      }
+  };
+  
+  // Fonction pour supprimer un sinistre
+const supprimerSinistre = async (req, res) => {
+    try {
+        const sinistreId = req.params.id;
+
+        // Trouver et supprimer le sinistre par ID
+        const sinistreSupprime = await Sinistre.findByIdAndDelete(sinistreId);
+
+        if (!sinistreSupprime) {
+            return res.status(404).json({ message: 'Sinistre non trouvé' });
+        }
+
+        res.status(200).json({ message: 'Sinistre supprimé avec succès' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur lors de la suppression du sinistre' });
+    }
+};
+module.exports = { 
+     getSinistreByCodeClient ,
+     getSinistreById ,
+     getAllSinistres , 
+     AjouterSinistre ,
+     UpdateSinistre,
+     supprimerSinistre
+    };

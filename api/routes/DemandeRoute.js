@@ -14,17 +14,7 @@ router.get('/getDemandesByCodeClient/:codeClient', demandeController.getDemandeB
  
 router.post('/addDemandesByCodeAgent/:codeAgent', demandeController.addDemandeByCodeAgent); 
 
-router.post('/repondreDemandeParEmail/:codeClient', async (req, res) => {
-    const codeClient = req.params.codeClient;
-    const reponse = req.body.reponse;
-
-    try {
-        await demandeController.repondreDemandeParEmailByCodeClient(codeClient, reponse);
-        res.status(200).json({ message: 'E-mail envoyé avec succès en réponse à la demande du client.' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.post('/repondreDemandeParEmail/:codeClient',demandeController.repondreDemandeParEmailByCodeClient);
 
 router.get('/getAllDemandesByCodeClient/:codeClient',demandeController. getAllDemandesByCodeClient);
 

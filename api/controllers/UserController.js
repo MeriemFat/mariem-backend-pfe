@@ -276,6 +276,44 @@ const changePassword = async (req, res) => {
     }
 }
 
+async function getByEmail(req, res) {
+    const {email} = req.query;
+    try {
+        const user = await User.findOne({email});
+
+        if (!user) {
+            return res.status(404).json({error: 'User not found'});
+        }
+
+        const {codeClient , codeAgent , Nom,prenom,phone,adresse,password, email,cin, typePerson , 
+            ville, codePostal, typeIdentifiant,dateCreation, dateDernierMiseAjour, dateValidite, codeParent , avatar, identifiant} = user;
+        res.status(200).json({
+            codeClient ,
+             codeAgent ,
+              Nom,
+              prenom,
+              phone,
+              adresse,
+              password, 
+              email,
+              cin,
+               typePerson , 
+               ville,
+              codePostal, 
+              typeIdentifiant,
+              dateCreation,
+               dateDernierMiseAjour,
+                dateValidite,
+                 codeParent , 
+                 avatar, 
+                 identifiant
+
+        });
+    } catch (error) {
+        console.error('Error fetching user by email:', error.message);
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+} 
 
 const getUserByCodeAgent = async (req, res) => {
     const { codeAgent } = req.params;
@@ -294,11 +332,260 @@ const getUserByCodeAgent = async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   };
+ const  requestRole = async (req,res)=>{
+    try{
+        const user = req.user;
+        const requestedRole = req.body.requestedRole;
+        const roleRequest = await RoleRequest.create({
+            user:user,
+            requestedRole:requestedRole,
+        });
+        res.status(200).json(roleRequest);
+    }catch(e){
+        res.status(400).json({error:e.message})
+    }
+}; 
+// Fonction pour récupérer tous les utilisateurs
+const getAllUser = async (req, res) => {
+    try {
+        const users = await User.find().exec(); // Récupérer tous les utilisateurs
+        res.json(users); // Envoyer la liste des utilisateurs en réponse
+    } catch (error) {
+        console.error("Erreur lors de la récupération des utilisateurs :", error.message);
+        res.status(500).json({ message: "Erreur lors de la récupération des utilisateurs." });
+    }
+};
+
+const checkemail =async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+    const user = await User.findOne({ email });
+    if (user) {
+        return res.status(200).json({ exists: true });
+    } else {
+        return res.status(200).json({ exists: false });
+    }
+};
+const toggleBlockUser =async(req, res) =>{
+    try {
+        const _id = req.body._id;
+        const userToBlock = await User.findById(_id);
+
+        userToBlock.isBlocked = !userToBlock.isBlocked;
+
+        await User.findByIdAndUpdate(userToBlock._id, userToBlock);
+
+        res.status(200).json({message: "Updated user status successfully!"})
+    } catch (e) {
+        res.status(401).json({error: e.message})
+    }
+}; 
+const  updateUserProfile =async(req, res)  =>{
+    try {
+        const u = req.body.user;
+        const usr = req.user;
+        usr.codeClient = u.codeClient;
+        usr.Nom = u.Nom;
+        usr.prenom = u.prenom;
+        usr.phone = u.phone;
+        usr.adresse=u.adresse;
+        usr.email=u.email;
+        usr.cin=u.cin;
+        usr.typePerson=u.typePerson;
+        usr.ville=u.ville;
+        usr.codePostal=u.codePostal;
+        usr.typeIdentifiant=u.typeIdentifiant;
+        usr.dateCreation=u.dateCreation;
+        usr.dateDernierMiseAjour=u.dateDernierMiseAjour;
+        usr.dateValidite=u.dateValidite;
+        usr.roles=u.roles;
+        usr.codeParent=u.codeParent;
+        usr.avatar=u.avatar;
+        usr.identifiant=u.identifiant;
+        await User.findByIdAndUpdate(usr._id,usr)
+
+        const user = await User.findById(usr._id);
+
+        const accessToken = jwt.sign(
+            {
+                "user":
+                    {
+                        codeClient: user.codeClient,
+                        codeAgent: user.codeAgent,
+                        Nom: user.Nom,
+                        prenom: user.prenom,
+                        phone: user.phone,
+                        adresse: user.adresse,
+                        email: user.email,
+                        cin: user.cin,
+                        typePerson: user.typePerson,
+                        ville: user.ville,
+                        codePostal: user.codePostal,
+                        typeIdentifiant: user.typeIdentifiant,
+                        dateCreation: user.dateCreation,
+                        dateDernierMiseAjour: user.dateDernierMiseAjour,
+                        dateValidite: user.dateValidite,
+                        roles: user.roles,
+                        codeParent: user.codeParent,
+                        avatar: user.avatar,
+                        identifiant: user.identifiant,
+                    }
+            },
+            process.env.ACCESS_TOKEN_SECRET,
+            {expiresIn: '60m'}
+        )
+        // Create a refresh token
+        const refreshToken = jwt.sign(
+            {
+                "_id": u._id
+            },
+            process.env.REFRESH_TOKEN_SECRET,
+            {expiresIn: '7d'}
+        )
+        res.cookie('jwt', refreshToken, {
+            sameSite: 'None',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        })
+        await User.findByIdAndUpdate(u._id, u);
+        res.status(200).json({accessToken})
+
+    } catch (err) {
+        res.status(401).json({error: err.message})
+    }
+}; 
+const getProfileByCodeAgent = async (req, res) => {
+    try {
+        const { codeAgent } = req.query;
+
+        // Chercher l'utilisateur par codeAgent
+        const user = await User.findOne({ codeAgent });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Retourner les informations utilisateur
+        res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+// Met à jour le profil de l'agent
+const updateProfile = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        const { codeAgent } = req.user;
+        const updateData = req.body;
+
+        const updatedUser = await User.findOneAndUpdate(
+            { codeAgent },
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const getRoleRequests= async(req,res)=>{
+    try{
+        const requests = await RoleRequest.find({ result: 'PENDING' });
+        let reqs = [];
+        for(const request of requests){
+            const user = await User.findById(request.user)
+            const newRequest ={
+                _id: request._id,
+                requestedRole: request.requestedRole,
+                result: request.result,
+                user: user,
+            }
+            reqs.push(newRequest);
+        }
+        res.status(200).json(reqs);
+    }catch(e){
+        res.status(400).json({error:e.message})
+    }
+}; 
+const acceptRoleRequest= async(req,res)=>{
+    try{
+        let roleRequest = req.body;
+        roleRequest.result = RequestedRole.ACCEPTED;
+        const user = await User.findById(roleRequest.user);
+        user.roles.push(roleRequest.requestedRole);
+        await User.findByIdAndUpdate(user._id,user);
+        roleRequest.user=await User.findById(user._id);
+        await RoleRequest.findByIdAndUpdate(roleRequest._id,roleRequest);
+        const result = await RoleRequest.findById(roleRequest._id);
+        res.status(200).json(result);
+    }catch(e){
+        res.status(400).json({error:e.message})
+    }
+}; 
+const  rejectRoleRequest=async(req,res)=>{
+    try{
+        const roleRequest = req.body;
+        roleRequest.result = RequestedRole.REJECTED;
+        await RoleRequest.findByIdAndUpdate(roleRequest._id,roleRequest);
+        const result = await RoleRequest.findById(roleRequest._id);
+        res.status(200).json(result);
+    }catch(e){
+        console.log("Error: "+e.message);
+        res.status(400).json({error:e.message})
+    }
+}; 
+const  getUserRoleRequest=async(req, res)=> {
+    try {
+        const user = req.user;
+        const requests = await RoleRequest.find();
+        const userRequests = requests.filter(r => {
+            return r.user.equals(user._id);
+        });
+        if (!requests) {
+            res.status(200).json({ notfound: true });
+            return;
+        }
+
+        if (userRequests.length > 0) {
+            const request = userRequests.find(r => r.result === 'PENDING');
+            if (request && (request.result === 'PENDING')) {
+                res.status(200).json({ request });
+            } else {
+                res.status(200).json({ notfound: true });
+            }
+        } else {
+            res.status(200).json({ notfound: true });
+        }
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+}
 module.exports = {
     loginUser,
     signupUser,
     updateRoleUser,
     resetPassword,
     changePassword , 
-    getUserByCodeAgent
+    getUserByCodeAgent, 
+    getByEmail, 
+    requestRole, 
+    getAllUser, 
+    checkemail, 
+    toggleBlockUser, 
+    updateUserProfile, 
+    getProfileByCodeAgent, 
+    updateProfile, getUserRoleRequest,
+    getRoleRequests, acceptRoleRequest ,rejectRoleRequest
 }

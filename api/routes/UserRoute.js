@@ -9,6 +9,7 @@ router.post('/login',UserController.loginUser);
 router.put('/updateRole/:userId', tokenVerif.requireAuth, UserController.updateRoleUser);
 router.put('/reset',UserController.resetPassword);
 router.put('/change-password',tokenVerif.requireAuth,UserController.changePassword);
+router.put('/toggle-block',UserController.toggleBlockUser); 
 // Route pour obtenir un utilisateur par codeClient
 router.get('/getUserByCodeClient/:codeClient', async (req, res) => {
     try {
@@ -23,4 +24,14 @@ router.get('/getUserByCodeClient/:codeClient', async (req, res) => {
     }
   });
   router.get('/getUserByCodeAgent/:codeAgent',UserController.getUserByCodeAgent);
+  router.get('/getbyemail', UserController.getByEmail);
+  router.post('/request',UserController.requestRole);
+  router.get('/getAllusers', UserController.getAllUser);
+  router.post('/checkEmail', UserController.checkemail);
+  router.put('/profile', tokenVerif.requireAuth, UserController.updateProfile);
+  router.get('/getProfile',UserController.getProfileByCodeAgent);
+  router.get('/requests',UserController.getRoleRequests);
+  router.put('/accept',tokenVerif.requireAdmin,UserController.acceptRoleRequest);
+  router.put('/reject',tokenVerif.requireAdmin,UserController.rejectRoleRequest);
+  router.get('/check-request',tokenVerif.requireAuth,UserController.getUserRoleRequest);
 module.exports = router;

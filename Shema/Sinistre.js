@@ -5,18 +5,18 @@ const natureSinistreEnum = ['Recour', 'Defonce', 'corporelle'];
 const etatRéglement=['ouvert','cloturer'];
 // Définir le schéma de sinistre
 const sinistre =  mongoose.Schema({
-    numPolice: {
-        type:String,
-        required:true
+    codeClient: {
+        type: String,
+        required: true,
+        ref: 'Contrat' 
     },
     numSinistre: {
         type:String,
         required:true
     },
-    codeClient: {
-        type: String,
-        required: true,
-        ref: 'Contrat' 
+    numPolice: {
+        type:String,
+        required:true
     },
      codeAgent:{
         type: String,
@@ -27,7 +27,7 @@ const sinistre =  mongoose.Schema({
         type: Date ,
          require:true
         }, 
-   
+
     etatSinistre:{
         type:String ,
          enum:etatRéglement
@@ -43,7 +43,7 @@ const sinistre =  mongoose.Schema({
     contratId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Contrat', // Nom du modèle référencé (Contrat)
-        required: true
+       
     }
 });
 const Sinistre = mongoose.model("Sinistre", sinistre);

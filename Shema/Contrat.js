@@ -4,7 +4,7 @@ const mongoose =require("mongoose");
 const contrat = mongoose.Schema({ 
    numPolice:{
     type: String,
-    required: true // Assure que ce champ est obligatoire
+     // Assure que ce champ est obligatoire
 },
 codeClient: {
     type: String,
@@ -16,19 +16,19 @@ codeClient: {
     required: true,
     ref: 'User' 
 }, 
- libelleBreanche:{
+libelle_branche:{
     type:String, 
     required:true
 }, 
- libelleSousBranche:{
-    type:Number, 
+libelle_sous_branche:{
+    type:String, 
     required:true
 }, 
-dateEchanceProchaine:{
+date_echeance_prochaine:{
     type:Date, 
     required:true}, 
-typePersonne:{
-    type:Date ,
+type_personne:{
+    type:String,
      required:true
     }, 
     numSinistre: {
@@ -36,8 +36,7 @@ typePersonne:{
         ref: 'Sinistre' // Référence au modèle Sinistre
     }, 
     numContrat: {
-        type: String,
-        required: true
+        type: String
     }
 }); 
 const Contrat = mongoose.model('Contrat', contrat);

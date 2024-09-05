@@ -26,7 +26,7 @@ const demandeSchema = mongoose.Schema({
     }, 
     codeAgent:{ 
         type:String, 
-        required:true, 
+    
         ref:'User'
     }
 });

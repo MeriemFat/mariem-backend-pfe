@@ -47,9 +47,115 @@ const getQuittanceById = async (req, res) => {
       res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+const getAllQuittance = async (req, res) => {
+    try {
+        const quittance = await Quittance.find();
+        res.status(200).json(quittance);
+      } catch (error) {
+        res.status(500).json({ message: 'Erreur lors de la récupération des quittance', error });
+      }
+    };
+// Supprimer une quittance
+const supprimerQuittance = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedQuittance = await Quittance.findByIdAndDelete(id);
+    if (!deletedQuittance) {
+      return res.status(404).json({ message: 'Quittance non trouvée' });
+    }
+    res.status(200).json({ message: 'Quittance supprimée avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la quittance:', error);
+    res.status(500).json({ message: 'Erreur lors de la suppression de la quittance', error });
+  }
+};
+// Ajouter une quittance
+const ajouterQuittance = async (req, res) => {
+  try {
+    const { codeAgent, numPolice, numQuittance, dateMutDu, dateMutAu, primeTotal} = req.body;
+    
+    const newQuittance = new Quittance({
+      codeAgent,
+      numPolice,
+      numQuittance,
+      dateMutDu,
+      dateMutAu,
+      primeTotal
+    });
 
+    const quittance = await newQuittance.save();
+    res.status(201).json(quittance);
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout de la quittance:', error);
+    res.status(500).json({ message: 'Erreur lors de l\'ajout de la quittance', error });
+  }
+};
+
+// Modifier une quittance
+const modifierQuittance = async (req, res) => {
+  try {
+    const { codeAgent, numPolice, numQuittance, dateMutDu, dateMutAu, primeTotal } = req.body;
+    const quittanceId = req.params.id;
+
+    const updatedQuittance = await Quittance.findByIdAndUpdate(
+      quittanceId,
+      {
+        codeAgent,
+        numPolice,
+        numQuittance,
+        dateMutDu,
+        dateMutAu,
+        primeTotal
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedQuittance) {
+      return res.status(404).json({ message: 'Quittance non trouvée' });
+    }
+
+    res.status(200).json(updatedQuittance);
+  } catch (error) {
+    console.error('Erreur lors de la modification de la quittance:', error);
+    res.status(500).json({ message: 'Erreur lors de la modification de la quittance', error });
+  }
+};
+
+// Fonction pour mettre à jour l'état de la quittance
+const updateStatus = async (req, res) => {
+  const { quittanceId, newStatus } = req.body;
+
+  // Vérifiez que le nouvel état est valide
+  const validStatuses = ['Arriere', 'Accompte', 'Règlé'];
+  if (!validStatuses.includes(newStatus)) {
+      return res.status(400).json({ message: 'État de règlement invalide' });
+  }
+
+  try {
+      // Trouver la quittance et mettre à jour son état
+      const quittance = await Quittance.findByIdAndUpdate(
+          quittanceId,
+          { EtatMvt: newStatus },
+          { new: true }
+      );
+
+      if (!quittance) {
+          return res.status(404).json({ message: 'Quittance non trouvée' });
+      }
+
+      res.status(200).json({ message: 'État de règlement mis à jour', updatedQuittance: quittance });
+  } catch (error) {
+      console.error('Error updating quittance status:', error);
+      res.status(500).json({ message: 'Erreur serveur lors de la mise à jour de l\'état de règlement' });
+  }
+};
 // Exporter la fonction pour l'utiliser dans d'autres fichiers
 module.exports = {
     getQuittanceByCodeAgent, 
-    getQuittanceById
+    getQuittanceById, 
+    getAllQuittance , 
+    supprimerQuittance , 
+    ajouterQuittance , 
+    modifierQuittance, 
+    updateStatus
 };

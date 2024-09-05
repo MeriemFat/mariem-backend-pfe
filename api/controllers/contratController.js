@@ -71,16 +71,14 @@ const getContratsByCodeClientVariable = async (req, res) => {
 
 // Get All Contrats 
 
-const getAllContrats = async () => {
+const getAllContrats = async (req, res) => {
     try {
-        const contrats = await Contrat.find({}).exec(); // Requête pour récupérer tous les contrats
-        return contrats;
-    } catch (error) {
-        console.error("Erreur lors de la récupération des contrats :", error.message);
-        throw new Error("Erreur lors de la récupération des contrats");
-    }
-}; 
-
+        const contracts = await Contrat.find();
+        res.status(200).json(contracts);
+      } catch (error) {
+        res.status(500).json({ message: 'Erreur lors de la récupération des contrats', error });
+      }
+    };
 //Get Contrat By Agent 
 
 const getContractByCodeAgent = async (req, res) => {
@@ -146,4 +144,101 @@ const getContractByCodeAgent = async (req, res) => {
         }
     };
 
-module.exports = { getContratsByCodeClient , getAllContrats , getContractByCodeAgent , getAllContratsAndSinistresByCodeClient, getAllContratsAndQuittanceByCodeClient, getContratsByCodeClientVariable , getContratById};
+    // Fonction pour ajouter un nouveau contrat
+   const AjouterContrat = async (req, res) => {
+      try {
+        const {  numPolice, codeClient, codeAgent, libelle_branche, libelle_sous_branche, date_echeance_prochaine, type_personne, numSinistre, numContrat} = req.body;
+    
+        // Crée un nouveau contrat
+        const newContrat = new Contrat({
+            numPolice,
+            codeClient,
+            codeAgent,
+            libelle_branche,
+            libelle_sous_branche,
+            date_echeance_prochaine,
+            type_personne,
+            numSinistre,
+            numContrat
+        });
+    
+        // Enregistre le contrat dans la base de données
+        const savedContrat = await newContrat.save();
+    
+        // Renvoie une réponse réussie
+        res.status(201).json(savedContrat);
+      } catch (error) {
+        // Gère les erreurs
+        console.error('Erreur lors de l\'ajout du contrat:', error);
+        res.status(500).json({ message: 'Erreur lors de l\'ajout du contrat', error });
+      }
+    };
+    // Fonction pour mettre à jour un contrat
+const updateContrat = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { numPolice, codeClient, codeAgent, libelle_branche, libelle_sous_branche, date_echeance_prochaine, type_personne, numSinistre, numContrat } = req.body;
+  
+      // Met à jour le contrat
+      const updatedContrat = await Contrat.findByIdAndUpdate(
+        id,
+        {
+          numPolice,
+          codeClient,
+          codeAgent,
+          libelle_branche,
+          libelle_sous_branche,
+          date_echeance_prochaine,
+          type_personne,
+          numSinistre,
+          numContrat
+        },
+        { new: true, runValidators: true } // new: true pour renvoyer le document mis à jour, runValidators pour s'assurer que les validations sont exécutées
+      );
+  
+      if (!updatedContrat) {
+        return res.status(404).json({ message: 'Contrat non trouvé' });
+      }
+  
+      // Renvoie une réponse réussie
+      res.status(200).json(updatedContrat);
+    } catch (error) {
+      // Gère les erreurs
+      console.error('Erreur lors de la mise à jour du contrat:', error);
+      res.status(500).json({ message: 'Erreur lors de la mise à jour du contrat', error });
+    }
+  };
+  // Fonction pour supprimer un contrat
+const deleteContrat = async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      // Supprime le contrat
+      const deletedContrat = await Contrat.findByIdAndDelete(id);
+  
+      if (!deletedContrat) {
+        return res.status(404).json({ message: 'Contrat non trouvé' });
+      }
+  
+      // Renvoie une réponse réussie
+      res.status(200).json({ message: 'Contrat supprimé avec succès' });
+    } catch (error) {
+      // Gère les erreurs
+      console.error('Erreur lors de la suppression du contrat:', error);
+      res.status(500).json({ message: 'Erreur lors de la suppression du contrat', error });
+    }
+  };
+  
+
+module.exports = {
+    updateContrat,
+    deleteContrat,
+    getContratsByCodeClient ,  
+    AjouterContrat ,
+    getAllContrats ,
+    getContractByCodeAgent ,
+    getAllContratsAndSinistresByCodeClient, 
+    getAllContratsAndQuittanceByCodeClient, 
+    getContratsByCodeClientVariable , 
+    getContratById
+};
