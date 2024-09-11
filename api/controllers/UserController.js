@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 const asyncHandler = require('express-async-handler')
 const templateMail = require('../../config/templateMail.js');
 const RoleRequest = require('../../Shema/RoleRequest.js')
-
+const mongoose = require('mongoose'); // Importez mongoose
 const RequestedRole = {
     ACCEPTED:'ACCEPTED',
     REJECTED:'REJECTED',
@@ -42,31 +42,30 @@ const loginUser = async (req, res) => {
 
         const accessToken = jwt.sign(
             {
-                user: {
-                    codeClient: user.codeClient,
-                    codeAgent: user.codeAgent,
-                    Nom: user.Nom,
-                    prenom: user.prenom,
-                    phone: user.phone,
-                    adresse: user.adresse,
-                    email: user.email,
-                    cin: user.cin,
-                    typePerson: user.typePerson,
-                    ville: user.ville,
-                    codePostal: user.codePostal,
-                    typeIdentifiant: user.typeIdentifiant,
-                    dateCreation: user.dateCreation,
-                    dateDernierMiseAjour: user.dateDernierMiseAjour,
-                    dateValidite: user.dateValidite,
-                    roles: user.roles,
-                    codeParent: user.codeParent,
-                    avatar: user.avatar,
-                    identifiant: user.identifiant
-                }
+                _id: user._id,
+                codeClient: user.codeClient,
+                codeAgent: user.codeAgent,
+                Nom: user.Nom,
+                prenom: user.prenom,
+                phone: user.phone,
+                adresse: user.adresse,
+                email: user.email,
+                cin: user.cin,
+                typePerson: user.typePerson,
+                ville: user.ville,
+                codePostal: user.codePostal,
+                typeIdentifiant: user.typeIdentifiant,
+                dateCreation: user.dateCreation,
+                dateDernierMiseAjour: user.dateDernierMiseAjour,
+                dateValidite: user.dateValidite,
+                roles: user.roles,
+                codeParent: user.codeParent,
+                avatar: user.avatar,
+                identifiant: user.identifiant
             },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: '60m' }
-        );
+        );        
 
         const refreshToken = jwt.sign(
             {
@@ -332,7 +331,8 @@ const getUserByCodeAgent = async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   };
- const  requestRole = async (req,res)=>{
+  
+  async function requestRole(req,res){
     try{
         const user = req.user;
         const requestedRole = req.body.requestedRole;
@@ -344,7 +344,9 @@ const getUserByCodeAgent = async (req, res) => {
     }catch(e){
         res.status(400).json({error:e.message})
     }
-}; 
+}
+
+
 // Fonction pour récupérer tous les utilisateurs
 const getAllUser = async (req, res) => {
     try {
@@ -368,7 +370,7 @@ const checkemail =async (req, res) => {
         return res.status(200).json({ exists: false });
     }
 };
-const toggleBlockUser =async(req, res) =>{
+async function toggleBlockUser(req, res) {
     try {
         const _id = req.body._id;
         const userToBlock = await User.findById(_id);
@@ -381,7 +383,7 @@ const toggleBlockUser =async(req, res) =>{
     } catch (e) {
         res.status(401).json({error: e.message})
     }
-}; 
+}
 const  updateUserProfile =async(req, res)  =>{
     try {
         const u = req.body.user;
@@ -499,27 +501,87 @@ const updateProfile = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-
-const getRoleRequests= async(req,res)=>{
-    try{
+async function getRoleRequests(req, res) {
+    try {
+        // Récupérer les demandes en attente
         const requests = await RoleRequest.find({ result: 'PENDING' });
         let reqs = [];
-        for(const request of requests){
-            const user = await User.findById(request.user)
-            const newRequest ={
+
+        for (const request of requests) {
+            let user = null; // Initialisez l'objet user comme null par défaut
+
+            // Vérifiez si l'ID utilisateur est défini
+            if (request.user) {
+                try {
+                    const foundUser = await User.findById(request.user);
+
+                    // Vérifiez si l'utilisateur a été trouvé
+                    if (foundUser) {
+                        user = {
+                            _id: foundUser._id,
+                            codeClient: foundUser.codeClient,
+                            codeAgent: foundUser.codeAgent,
+                            Nom: foundUser.Nom,
+                            prenom: foundUser.prenom,
+                            phone: foundUser.phone,
+                            adresse: foundUser.adresse,
+                            email: foundUser.email,
+                            cin: foundUser.cin,
+                            typePerson: foundUser.typePerson,
+                            ville: foundUser.ville,
+                            codePostal: foundUser.codePostal,
+                            typeIdentifiant: foundUser.typeIdentifiant,
+                            dateCreation: foundUser.dateCreation,
+                            dateDernierMiseAjour: foundUser.dateDernierMiseAjour,
+                            dateValidite: foundUser.dateValidite,
+                            roles: foundUser.roles,
+                            codeParent: foundUser.codeParent,
+                            avatar: foundUser.avatar,
+                            identifiant: foundUser.identifiant,
+                            // Ajoutez d'autres champs de `foundUser` ici si nécessaire
+                        };
+                    } else {
+                        console.warn(`User with ID ${request.user} not found.`);
+                    }
+                } catch (err) {
+                    console.error(`Error fetching user with ID ${request.user}:`, err.message);
+                }
+            } else {
+                console.warn(`Request ${request._id} has no user ID.`);
+            }
+
+            // Création de l'objet newRequest
+            const newRequest = {
                 _id: request._id,
                 requestedRole: request.requestedRole,
                 result: request.result,
-                user: user,
-            }
+                user, // Renvoie l'objet user avec des valeurs récupérées ou null
+            };
+
             reqs.push(newRequest);
         }
+
         res.status(200).json(reqs);
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+}
+
+
+async function rejectRoleRequest(req,res){
+    try{
+        const roleRequest = req.body;
+        roleRequest.result = RequestedRole.REJECTED;
+        await RoleRequest.findByIdAndUpdate(roleRequest._id,roleRequest);
+        const result = await RoleRequest.findById(roleRequest._id);
+        res.status(200).json(result);
     }catch(e){
+        console.log("Error: "+e.message);
         res.status(400).json({error:e.message})
     }
-}; 
-const acceptRoleRequest= async(req,res)=>{
+}
+
+async function acceptRoleRequest(req,res){
     try{
         let roleRequest = req.body;
         roleRequest.result = RequestedRole.ACCEPTED;
@@ -533,8 +595,8 @@ const acceptRoleRequest= async(req,res)=>{
     }catch(e){
         res.status(400).json({error:e.message})
     }
-}; 
-const  rejectRoleRequest=async(req,res)=>{
+}
+async function rejectRoleRequest(req,res){
     try{
         const roleRequest = req.body;
         roleRequest.result = RequestedRole.REJECTED;
@@ -545,33 +607,37 @@ const  rejectRoleRequest=async(req,res)=>{
         console.log("Error: "+e.message);
         res.status(400).json({error:e.message})
     }
-}; 
-const  getUserRoleRequest=async(req, res)=> {
-    try {
-        const user = req.user;
-        const requests = await RoleRequest.find();
-        const userRequests = requests.filter(r => {
-            return r.user.equals(user._id);
-        });
-        if (!requests) {
-            res.status(200).json({ notfound: true });
-            return;
-        }
+}
 
-        if (userRequests.length > 0) {
-            const request = userRequests.find(r => r.result === 'PENDING');
-            if (request && (request.result === 'PENDING')) {
-                res.status(200).json({ request });
-            } else {
-                res.status(200).json({ notfound: true });
-            }
+async function getUserRoleRequest(req, res) {
+    try {
+        const user = req.user;  // L'utilisateur est bien extrait depuis le middleware
+        console.log("Request User:", user);  // Vérifie les détails de l'utilisateur
+        console.log("Type of user._id:", typeof user._id);  // Vérifie le type de user._id
+        
+        // Utilise findOne pour chercher une requête de rôle pour cet utilisateur
+        const request = await RoleRequest.findOne({
+            user: user._id,  // Requête avec l'_id de l'utilisateur
+            result: 'PENDING'  // Filtre les requêtes avec le statut 'PENDING'
+        });
+
+        // Si une requête est trouvée
+        if (request) {
+            res.status(200).json({ request });
         } else {
+            // Aucune requête en attente trouvée
             res.status(200).json({ notfound: true });
         }
     } catch (e) {
+        // Gérer les erreurs et retourner une erreur 400
+        console.error("Error in getUserRoleRequest:", e);
         res.status(400).json({ error: e.message });
     }
 }
+
+
+
+
 module.exports = {
     loginUser,
     signupUser,

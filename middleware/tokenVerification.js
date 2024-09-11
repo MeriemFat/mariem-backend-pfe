@@ -47,8 +47,9 @@ const requireAdmin = async (req,res,next) => {
 }
 
 
-const requireOrganizer = async (req,res,next)=>{
+const requireAgent = async (req,res,next) =>{
     const { authorization } = req.headers
+
     if (!authorization) {
         res.status(401).json({error: "Authorization is required!"})
     }
@@ -59,7 +60,7 @@ const requireOrganizer = async (req,res,next)=>{
         const { _id } = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
         const user = await User.findById(_id);
         user.roles.forEach(role=>{
-            if(role === 13){
+            if(role === 20){
                 authorized = true;
             }
         })
@@ -75,19 +76,20 @@ const requireOrganizer = async (req,res,next)=>{
 }
 
 const authMiddleware = (req, res, next) => {
-    const authHeader = req.header('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer')) {
-        return res.status(401).json({ message: 'Invalid or missing token format' });
-    }
-    const token = authHeader.split(' ')[1]; 
-    try {
-        const decoded = jwt.verify(token, `${process.env.JWT_SECRET}`);
-        req.user = decoded;
-        req.userId = decoded.userId;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+
+        console.log("Authenticated user:", user); // Ajoutez un log ici
+        req.user = user;
         next();
-    } catch (error) {
-        console.error(error);
-        res.status(401).json({ message: 'Invalid token' });
-    }
+    });
 };
-module.exports = {requireAuth,requireOrganizer,requireAdmin,authMiddleware}
+
+
+
+module.exports = {requireAuth,requireAgent,requireAdmin,authMiddleware}

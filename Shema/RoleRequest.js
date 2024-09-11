@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema
-
+const user = require('./User');
+// Définition des énumérations pour les rôles demandés et les résultats
 const RequestedRole = {
-    ACCEPTED:'ACCEPTED',
-    REJECTED:'REJECTED',
-    PENDING:'PENDING',
-    NEW:'NEW'
+    ACCEPTED: 'ACCEPTED',
+    REJECTED: 'REJECTED',
+    PENDING: 'PENDING',
+    NEW: 'NEW'
 };
 
 const Role = {
@@ -15,22 +15,23 @@ const Role = {
     AGENT: 20
 };
 
-const RoleRequest =  Schema({
-    requestedRole: {
-        type : Number,
-        enum : Object.values(Role),
-        default : Role.USER
-    },
-    result:{
-        type : String,
-        enum : Object.values(RequestedRole),
-        default : RequestedRole.PENDING
-    },
-    user : {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }
-})
-const rolerequest = mongoose.model('rolerequest', RoleRequest);
-module.exports = rolerequest;
+// Définition du schéma RoleRequest
+const RoleRequestSchema = mongoose.Schema({
+      requestedRole: {
+            type : Number,
+            enum : Object.values(Role),
+            default : Role.USER
+        },
+        result:{
+            type : String,
+            enum : Object.values(RequestedRole),
+            default : RequestedRole.PENDING
+        },
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }, },{ timestamps: true });; // Ajoute les timestamps pour createdAt et updatedAt
 
+// Création du modèle RoleRequest
+const RoleRequest = mongoose.model('rolerequest', RoleRequestSchema);
+module.exports = RoleRequest;

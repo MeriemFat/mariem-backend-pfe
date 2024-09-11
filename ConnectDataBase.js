@@ -1,5 +1,6 @@
 // create Node.js server application
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require('cors'); 
 const app = express();
 //app.use(cors());
@@ -36,8 +37,6 @@ const quittance = require("./Shema/Quittance");
 const user = require("./Shema/User");
 const rolerequest = require ("./Shema/RoleRequest.js"); 
 const chat = require("./Shema/Chat.js"); 
-// Using schema to build Mongoose models
-const mongoose = require("mongoose");
 // Création des modèles Mongoose à partir des schémas
 
 module.exports = {

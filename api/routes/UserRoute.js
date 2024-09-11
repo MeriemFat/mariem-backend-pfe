@@ -28,10 +28,10 @@ router.get('/getUserByCodeClient/:codeClient', async (req, res) => {
   router.post('/request',UserController.requestRole);
   router.get('/getAllusers', UserController.getAllUser);
   router.post('/checkEmail', UserController.checkemail);
-  router.put('/profile', tokenVerif.requireAuth, UserController.updateProfile);
+  router.put('/profile',  UserController.updateProfile);
   router.get('/getProfile',UserController.getProfileByCodeAgent);
   router.get('/requests',UserController.getRoleRequests);
-  router.put('/accept',tokenVerif.requireAdmin,UserController.acceptRoleRequest);
-  router.put('/reject',tokenVerif.requireAdmin,UserController.rejectRoleRequest);
-  router.get('/check-request',tokenVerif.requireAuth,UserController.getUserRoleRequest);
+  router.put('/accept',UserController.acceptRoleRequest);
+  router.put('/reject',UserController.rejectRoleRequest);
+  router.get('/check-request',tokenVerif.authMiddleware,UserController.getUserRoleRequest);
 module.exports = router;

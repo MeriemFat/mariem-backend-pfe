@@ -27,6 +27,8 @@ app.use(express.json());
 
 // Mount routes to respective imports
 
+
+
 app.use("/api/User", userRouter);
 
 // Make uploads folder static
@@ -48,6 +50,40 @@ app.use('/api/produit',produitRoute)
 app.use('/api/sinistres', sinistreRoute); 
 app.use('/api/quittance', quittanceRoute); 
 app.use('/api/chat', chatRoute); 
+app.get('/share', (req, res) => {
+const client = req.query.Client;
+
+const agent = req.query.Agent;
+
+
+// Render an HTML response
+
+res.send(`
+
+<html>
+
+<head>
+
+<title>Client and Agent Info</title>
+
+</head>
+
+<body>
+
+<h1>Client: ${client}</h1>
+
+<h1>Agent: ${agent}</h1>
+
+</body>
+
+</html>
+
+`);
+
+});
+
+
+
 
 // Error middleware for 404
 app.use(notFound);
@@ -64,3 +100,4 @@ app.listen(
 		colors.yellow.bold(`Server running on port ${PORT}`)
 	)
 );
+
