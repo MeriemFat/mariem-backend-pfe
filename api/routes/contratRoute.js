@@ -44,4 +44,5 @@ router.get('/getAllContratsAndQuittanceByCodeClient/:codeAgent', async (req, res
 router.post('/AjouterContrat' , contratController.AjouterContrat); 
 router.put('/ModifierContrat/:id', contratController.updateContrat); 
 router.delete('/supprimerContrat/:id', contratController.deleteContrat); 
+router.get('/clients', contratController.getClients);
 module.exports = router;

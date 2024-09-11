@@ -144,6 +144,19 @@ const getContractByCodeAgent = async (req, res) => {
         }
     };
 
+    const getClients = async (req, res) => {
+      try {
+        // Utilisez une condition pour filtrer les clients selon leurs rôles
+        const clients = await User.find({ roles: { $in: [1, 10] } });
+        res.status(200).json(clients);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des clients:', error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des clients', error });
+      }
+    };
+
+
+
     // Fonction pour ajouter un nouveau contrat
    const AjouterContrat = async (req, res) => {
       try {
@@ -240,5 +253,6 @@ module.exports = {
     getAllContratsAndSinistresByCodeClient, 
     getAllContratsAndQuittanceByCodeClient, 
     getContratsByCodeClientVariable , 
-    getContratById
+    getContratById, 
+    getClients
 };

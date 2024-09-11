@@ -5,7 +5,6 @@ const RequestedRole = {
     ACCEPTED: 'ACCEPTED',
     REJECTED: 'REJECTED',
     PENDING: 'PENDING',
-    NEW: 'NEW'
 };
 
 const Role = {
@@ -20,7 +19,7 @@ const RoleRequestSchema = mongoose.Schema({
       requestedRole: {
             type : Number,
             enum : Object.values(Role),
-            default : Role.USER
+            default : Role.Client
         },
         result:{
             type : String,
@@ -29,7 +28,7 @@ const RoleRequestSchema = mongoose.Schema({
         },
         user: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
+            ref: 'user'
         }, },{ timestamps: true });; // Ajoute les timestamps pour createdAt et updatedAt
 
 // Création du modèle RoleRequest

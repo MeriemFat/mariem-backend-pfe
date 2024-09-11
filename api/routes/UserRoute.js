@@ -25,13 +25,14 @@ router.get('/getUserByCodeClient/:codeClient', async (req, res) => {
   });
   router.get('/getUserByCodeAgent/:codeAgent',UserController.getUserByCodeAgent);
   router.get('/getbyemail', UserController.getByEmail);
-  router.post('/request',UserController.requestRole);
+  router.post('/request',tokenVerif.verifyToken,UserController.requestRole);
   router.get('/getAllusers', UserController.getAllUser);
   router.post('/checkEmail', UserController.checkemail);
-  router.put('/profile',  UserController.updateProfile);
+  router.put('/profile',tokenVerif.authenticate,UserController.updateProfile);
   router.get('/getProfile',UserController.getProfileByCodeAgent);
   router.get('/requests',UserController.getRoleRequests);
   router.put('/accept',UserController.acceptRoleRequest);
   router.put('/reject',UserController.rejectRoleRequest);
-  router.get('/check-request',tokenVerif.authMiddleware,UserController.getUserRoleRequest);
+  router.get('/check-request',tokenVerif.verifyToken,UserController.getUserRoleRequest);
+  router.get('/for-chat',tokenVerif.requireAuth,UserController.getUsersForChat)
 module.exports = router;
