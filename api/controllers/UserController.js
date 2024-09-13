@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const asyncHandler = require("express-async-handler");
 const templateMail = require("../../config/templateMail.js");
 const RoleRequest = require("../../Shema/RoleRequest.js");
+const transporter = require('../../config/nodemailer');
 const mongoose = require("mongoose"); // Importez mongoose
 const RequestedRole = {
   ACCEPTED: "ACCEPTED",
@@ -59,7 +60,8 @@ const loginUser = async (req, res) => {
         roles: user.roles,
         codeParent: user.codeParent,
         avatar: user.avatar,
-        identifiant: user.identifiant,
+        isBlocked: user.isBlocked,
+        codeParinage: user.codeParinage, 
       },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "60m" }
@@ -107,7 +109,8 @@ const signupUser = async (req, res) => {
     dateValidite,
     codeParent,
     avatar,
-    identifiant,
+    isBlocked,
+    codeParinage,
   } = req.body;
 
   try {
@@ -130,7 +133,7 @@ const signupUser = async (req, res) => {
       dateValidite,
       codeParent,
       avatar,
-      identifiant
+      isBlocked, codeParinage
     );
 
     user.secret = "";
@@ -157,7 +160,8 @@ const signupUser = async (req, res) => {
           roles: user.roles,
           codeParent: user.codeParent,
           avatar: user.avatar,
-          identifiant: user.identifiant,
+          isBlocked: user.isBlocked,
+          codeParinage: user.codeParinage,
         },
       },
       process.env.ACCESS_TOKEN_SECRET,
@@ -199,7 +203,8 @@ const signupUser = async (req, res) => {
         roles: user.roles,
         codeParent: user.codeParent,
         avatar: user.avatar,
-        identifiant: user.identifiant,
+        isBlocked: user.isBlocked,
+        codeParinage: user.codeParinage, 
       },
       accessToken,
     });
@@ -338,7 +343,8 @@ async function getByEmail(req, res) {
       dateValidite,
       codeParent,
       avatar,
-      identifiant,
+      isBlocked,
+      codeParinage
     } = user;
     res.status(200).json({
       codeClient,
@@ -359,7 +365,8 @@ async function getByEmail(req, res) {
       dateValidite,
       codeParent,
       avatar,
-      identifiant,
+      isBlocked,
+      codeParinage,
     });
   } catch (error) {
     console.error("Error fetching user by email:", error.message);
@@ -468,7 +475,8 @@ const updateUserProfile = async (req, res) => {
     usr.roles = u.roles;
     usr.codeParent = u.codeParent;
     usr.avatar = u.avatar;
-    usr.identifiant = u.identifiant;
+    usr.isBlocked = u.isBlocked;
+    usr.codeParinage = u.codeParinage; 
     await User.findByIdAndUpdate(usr._id, usr);
 
     const user = await User.findById(usr._id);
@@ -494,7 +502,8 @@ const updateUserProfile = async (req, res) => {
           roles: user.roles,
           codeParent: user.codeParent,
           avatar: user.avatar,
-          identifiant: user.identifiant,
+          isBlocked: user.isBlocked,
+          codeParinage : user.codeParinage, 
         },
       },
       process.env.ACCESS_TOKEN_SECRET,
@@ -666,19 +675,49 @@ async function rejectRoleRequest(req, res) {
 
 async function acceptRoleRequest(req, res) {
   try {
-    let roleRequest = req.body;
-    roleRequest.result = RequestedRole.ACCEPTED;
-    const user = await User.findById(roleRequest.user);
-    user.roles.push(roleRequest.requestedRole);
-    await User.findByIdAndUpdate(user._id, user);
-    roleRequest.user = await User.findById(user._id);
-    await RoleRequest.findByIdAndUpdate(roleRequest._id, roleRequest);
-    const result = await RoleRequest.findById(roleRequest._id);
+    const { user: userId, _id: roleRequestId, requestedRole } = req.body;
+
+    if (!userId || !roleRequestId || !requestedRole) {
+      return res.status(400).json({ error: "Informations manquantes" });
+    }
+
+    // Trouver l'utilisateur
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    // Supposons que le rôle à remplacer est le dernier rôle dans le tableau roles
+    const oldRole = user.roles[user.roles.length - 1]; // Exemple pour prendre le dernier rôle ajouté
+
+    // Retirer l'ancien rôle
+    user.roles = user.roles.filter(role => role !== oldRole);
+
+    // Ajouter le nouveau rôle si ce n'est pas déjà le même
+    if (!user.roles.includes(requestedRole)) {
+      user.roles.push(requestedRole);
+    } else {
+      return res.status(400).json({ error: "L'utilisateur a déjà ce rôle" });
+    }
+
+    // Mettre à jour l'utilisateur avec les nouveaux rôles
+    await User.findByIdAndUpdate(user._id, { roles: user.roles }, { new: true });
+
+    // Mettre à jour la demande de rôle
+    await RoleRequest.findByIdAndUpdate(roleRequestId, { result: RequestedRole.ACCEPTED, user: user._id }, { new: true });
+
+    // Renvoyer la demande de rôle mise à jour
+    const result = await RoleRequest.findById(roleRequestId);
+
     res.status(200).json(result);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    console.error("Error:", e.message);
+    res.status(500).json({ error: e.message });
   }
 }
+
+
+
 async function rejectRoleRequest(req, res) {
   try {
     const roleRequest = req.body;
@@ -731,6 +770,60 @@ async function getUsersForChat(req, res) {
     res.status(400).json({ error: e.message });
   }
 }
+const repondreAccepteParEmailByCodeAgent = async (req, res) => {
+  const { _id } = req.params; // Utilise l'ID pour identifier l'utilisateur
+  console.log("ID reçu :", _id); // Vérifie que l'ID est bien reçu
+
+  try {
+      // Récupérer l'utilisateur par son ID
+      const user = await User.findById(_id).exec();
+      console.log("Utilisateur trouvé :", user); // Affiche l'utilisateur trouvé
+
+      if (!user) {
+          console.error('Utilisateur non trouvé pour l\'ID:', _id);
+          return res.status(404).json({ message: 'Utilisateur non trouvé pour l\'ID: ' + _id });
+      }
+
+      const mailOptions = {
+        from: 'meriam.fathallah@takaful.tn',
+        to: user.email,
+        subject: 'Réponse à votre demande',
+        text: 'Votre demande a reçu la réponse suivante'
+    };
+
+    console.log('Envoi de l\'e-mail à :', user.email);
+
+    // Envoyer l'e-mail
+    await transporter.sendMail(mailOptions);
+
+      // Répondre avec un message de succès
+      res.status(200).json({ message: 'E-mail envoyé avec succès à ' + user.email });
+
+  } catch (error) {
+      console.error('Erreur lors de la réponse à la demande par e-mail:', error.message);
+      res.status(500).json({ message: 'Erreur lors de la réponse à la demande par e-mail: ' + error.message });
+  }
+};
+const getClientsWithCodeParrainage = async (req, res) => {
+  try {
+    // Rechercher tous les clients dont le champ `codeParrainage` n'est pas vide ou nul
+    const clients = await User.find({ codeParrainage: { $ne: "" } }).exec();
+
+    // Vérifier si des clients ont été trouvés
+    if (!clients || clients.length === 0) {
+      return res.status(404).json({ message: 'Aucun client avec un code de parrainage trouvé.' });
+    }
+
+    // Retourner la liste des clients
+    res.status(200).json(clients);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des clients avec un code de parrainage:", error.message);
+    res.status(500).json({ message: 'Erreur serveur lors de la récupération des clients.' });
+  }
+};
+
+
+
 
 module.exports = {
   loginUser,
@@ -752,4 +845,6 @@ module.exports = {
   acceptRoleRequest,
   rejectRoleRequest,
   getUsersForChat,
+  repondreAccepteParEmailByCodeAgent, 
+  getClientsWithCodeParrainage
 };

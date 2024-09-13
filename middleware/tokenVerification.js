@@ -18,33 +18,48 @@ const requireAuth = async (req, res, next) => {
     }
 }
 
-const requireAdmin = async (req,res,next) => {
-    const { authorization } = req.headers
+const requireAdmin = async (req, res, next) => {
+    const { authorization } = req.headers;
 
     if (!authorization) {
-        res.status(401).json({error: "Authorization is required!"})
-   }
-
-    const token = authorization.split(' ')[1]
-    try{
-        let authorized=false;
-        const  {user}  = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        // const user = await User.findById(u._id);
-        user.roles.forEach(role=>{
-            if(role === 30){
-                authorized = true;
-            }
-        })
-        if(!authorized){
-            res.status(403).json({error:"Unauthorized"});
-        }else{
-            req.user = user;
-            next()
-        }
-    }catch(err){
-        res.status(401).json({error : err.message});
+        return res.status(401).json({ error: "Authorization is required!" });
     }
-}
+
+    const token = authorization.split(' ')[1];
+
+    try {
+        let authorized = false;
+        // Déchiffrer le token et récupérer les informations utilisateur
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        console.log("Decoded Token:", decoded); // Ajout de log pour voir le contenu du token
+
+        // Accéder directement aux rôles depuis le jeton décodé
+        const roles = decoded.roles;
+
+        if (!roles) {
+            return res.status(403).json({ error: "User roles are required!" });
+        }
+
+        // Vérifier si le rôle administrateur (30) est présent
+        if (roles.includes(30)) {
+            authorized = true;
+        }
+
+        if (!authorized) {
+            return res.status(403).json({ error: "Unauthorized access: Admins only!" });
+        }
+
+        // Attacher l'utilisateur à la requête
+        req.user = decoded;  // Attacher toutes les informations utilisateur à la requête
+        next();
+
+    } catch (err) {
+        console.error("Token error:", err.message); // Log de l'erreur pour plus d'infos
+        return res.status(401).json({ error: "Invalid token: " + err.message });
+    }
+};
+
+
 
 
 const requireAgent = async (req,res,next) =>{

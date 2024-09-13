@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const http = require("http");
 const express = require('express');
 const { json } = require('express');
 const dotenv = require('dotenv');
@@ -24,6 +25,26 @@ const app = express();
 
 app.use(morgan('dev'));
 app.use(express.json());
+
+// Serveur WebSocket
+const server = http.createServer(app);
+const io = require("socket.io")(server);
+
+io.on("connection", (socket) => {
+    console.log('Client connected');
+    socket.on('message', async (data) => {
+        await chatController.sendMessage(io, data);
+    });
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    });
+
+    socket.on('error', (error) => {
+        console.error('WebSocket error:', error);
+    });
+});
+
+
 
 // Mount routes to respective imports
 
@@ -81,7 +102,6 @@ res.send(`
 `);
 
 });
-
 
 
 

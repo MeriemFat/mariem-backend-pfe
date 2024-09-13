@@ -51,7 +51,7 @@ const User =  Schema({
     roles: [{
         type: Number,
         enum: Object.values(Role),
-        default: Role.USER
+        default: Role.Client
     }],
     requestedRole: {
         type: String,
@@ -63,7 +63,11 @@ const User =  Schema({
         type: String,
         default: "http://localhost:3000/placeholder.webp"
     },
-    identifiant: String,
+    isBlocked: {
+        type:Boolean,
+        default : false
+    },
+    codeParinage:{type:String,}
     },
     
 ); 
@@ -91,7 +95,7 @@ User.statics.login = async function(email, password) {
 
 User.statics.signup = async function(codeClient,codeAgent,Nom,prenom,phone,
 	adresse,password,email,cin,typePerson,ville, codePostal,typrIdentifiant,
-	dateCreation,dateDernierMiseAjour,dateValidite,codeParent,identifiant,TypePerson) {
+	dateCreation,dateDernierMiseAjour,dateValidite,codeParent,isBlocked,TypePerson, codeParinage) {
 
     // if (!codeClient || !codeAgent || !Nom||!prenom||!phone) {
     //     throw new Error('All fields must be filled');
@@ -108,10 +112,10 @@ User.statics.signup = async function(codeClient,codeAgent,Nom,prenom,phone,
     // Hash the password before storing it
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const rls = [Role.USER];
+    const rls = [Role.Client];
     return await this.create({ codeClient,codeAgent,Nom,prenom,phone,
 		adresse,password: hashedPassword,email,cin,typePerson,ville, codePostal,typrIdentifiant,
-		dateCreation,dateDernierMiseAjour,dateValidite,roles: rls,codeParent,identifiant,TypePerson });
+		dateCreation,dateDernierMiseAjour,dateValidite,roles: rls,codeParent,isBlocked,TypePerson,codeParinage });
 };
 
 const user = mongoose.model('user', User);

@@ -10,4 +10,5 @@ router.post('/AjouterQuittance', quittanceController.ajouterQuittance);
 router.put('/ModifierQuittance/:id', quittanceController.modifierQuittance);
 router.delete('/SupprimerQuittance/:id', quittanceController.supprimerQuittance);
 router.put('/updateStatus', quittanceController.updateStatus);
+router.get('/clients', quittanceController.getClients);
 module.exports = router;

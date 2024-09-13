@@ -149,6 +149,16 @@ const updateStatus = async (req, res) => {
       res.status(500).json({ message: 'Erreur serveur lors de la mise à jour de l\'état de règlement' });
   }
 };
+const getClients = async (req, res) => {
+  try {
+    // Utilisez une condition pour filtrer les clients selon leurs rôles
+    const clients = await User.find({ roles: { $in: [1, 10] } });
+    res.status(200).json(clients);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des clients:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des clients', error });
+  }
+};
 // Exporter la fonction pour l'utiliser dans d'autres fichiers
 module.exports = {
     getQuittanceByCodeAgent, 
@@ -157,5 +167,6 @@ module.exports = {
     supprimerQuittance , 
     ajouterQuittance , 
     modifierQuittance, 
-    updateStatus
+    updateStatus, 
+    getClients
 };

@@ -143,11 +143,22 @@ const supprimerSinistre = async (req, res) => {
         res.status(500).json({ message: 'Erreur lors de la suppression du sinistre' });
     }
 };
+const getClients = async (req, res) => {
+    try {
+      // Utilisez une condition pour filtrer les clients selon leurs rôles
+      const clients = await User.find({ roles: { $in: [1, 10] } });
+      res.status(200).json(clients);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des clients:', error);
+      res.status(500).json({ message: 'Erreur lors de la récupération des clients', error });
+    }
+  };
 module.exports = { 
      getSinistreByCodeClient ,
      getSinistreById ,
      getAllSinistres , 
      AjouterSinistre ,
      UpdateSinistre,
-     supprimerSinistre
+     supprimerSinistre, 
+     getClients
     };

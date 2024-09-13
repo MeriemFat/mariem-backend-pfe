@@ -9,4 +9,5 @@ router.get('/getAllSinistre',sinistreController.getAllSinistres);
 router.post('/AjouterSinistre', sinistreController.AjouterSinistre);
 router.put('/updateSinistre/:id', sinistreController.UpdateSinistre);
 router.delete('/supprimerSinistre/:id', sinistreController.supprimerSinistre);
+router.get('/clients', sinistreController.getClients);
 module.exports = router;

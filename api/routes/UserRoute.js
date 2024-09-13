@@ -31,8 +31,11 @@ router.get('/getUserByCodeClient/:codeClient', async (req, res) => {
   router.put('/profile',tokenVerif.authenticate,UserController.updateProfile);
   router.get('/getProfile',UserController.getProfileByCodeAgent);
   router.get('/requests',UserController.getRoleRequests);
-  router.put('/accept',UserController.acceptRoleRequest);
-  router.put('/reject',UserController.rejectRoleRequest);
+  router.put('/accept',tokenVerif.requireAdmin,UserController.acceptRoleRequest);
+  router.put('/reject',tokenVerif.requireAdmin,UserController.rejectRoleRequest);
   router.get('/check-request',tokenVerif.verifyToken,UserController.getUserRoleRequest);
-  router.get('/for-chat',tokenVerif.requireAuth,UserController.getUsersForChat)
+  router.get('/for-chat',tokenVerif.requireAuth,UserController.getUsersForChat); 
+  router.post('/repondreAcceptParEmail/:_id',UserController.repondreAccepteParEmailByCodeAgent);
+  router.get('/clients/parrainage', UserController.getClientsWithCodeParrainage);
+
 module.exports = router;
