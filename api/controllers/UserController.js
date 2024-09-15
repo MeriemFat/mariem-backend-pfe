@@ -266,34 +266,44 @@ const updateRoleUser = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  let Email = req.body.email;
+  const email = req.body.email;
   const charset =
     "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+";
   let password = "";
 
+  // Génération du nouveau mot de passe
   for (let i = 0; i < 10; i++) {
     const randomIndex = Math.floor(Math.random() * charset.length);
     password += charset[randomIndex];
   }
 
-  const user = await User.findOne({ email: Email.toString() });
-  if (!user._id) {
-    Error("Invalid email");
-  }
   try {
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
+    // Vérification de l'existence de l'utilisateur avec cet e-mail
+    const user = await User.findOne({ email: email.toString() });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé avec cet e-mail" });
+    }
 
-    await User.findByIdAndUpdate(user._id, user);
+    // Hashage du nouveau mot de passe
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Mise à jour du mot de passe de l'utilisateur
+    await User.findByIdAndUpdate(user._id, { password: hashedPassword });
+
+    // Envoi de l'e-mail avec le nouveau mot de passe
     await mailer.sendMail({
       from: "meriam.fathallah@takaful.tn",
-      to: Email,
-      subject: "Reset password request",
-      html: "<p>Your password has been reset to: </p><b>" + password + "</b>",
+      to: email,
+      subject: "Demande de réinitialisation du mot de passe",
+      html: `<p>Votre mot de passe a été réinitialisé. Votre nouveau mot de passe est : </p><b>${password}</b>`,
     });
-    res.status(200).json({ message: "Password reset is sent to " + Email });
+
+    // Réponse en cas de succès
+    res.status(200).json({ message: "Le mot de passe a été réinitialisé et envoyé à " + email });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Erreur lors de la réinitialisation du mot de passe:", error);
+    res.status(500).json({ error: "Erreur lors de la réinitialisation du mot de passe" });
   }
 };
 

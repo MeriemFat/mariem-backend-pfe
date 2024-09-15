@@ -16,33 +16,34 @@ const quittanceRoute = require("./api/routes/QuittanceRoute.js");
 const demandeRoute = require("./api/routes/DemandeRoute.js"); 
 const chatRoute=require("./api/routes/ChatRoute.js"); 
 const colors = require('colors'); 
+const socketIo = require('socket.io');
+
 dotenv.config();
 
 // Invoke connectDB
 db();
 
 const app = express();
-
+const server = http.createServer(app);
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Serveur WebSocket
-const server = http.createServer(app);
-const io = require("socket.io")(server);
-
-io.on("connection", (socket) => {
-    console.log('Client connected');
-    socket.on('message', async (data) => {
-        await chatController.sendMessage(io, data);
-    });
+const io = socketIo(server, {
+    cors: {
+      origin: "*", // Pour permettre les connexions depuis n'importe quelle origine
+      methods: ["GET", "POST"]
+    }
+  });
+  
+  io.on('connection', (socket) => {
+    console.log('New client connected');
+  
+    // Gérer les événements WebSocket ici
     socket.on('disconnect', () => {
-        console.log('Client disconnected');
+      console.log('Client disconnected');
     });
+  });
 
-    socket.on('error', (error) => {
-        console.error('WebSocket error:', error);
-    });
-});
 
 
 
@@ -70,7 +71,7 @@ app.use('/api/categorie',catalogueRoute);
 app.use('/api/produit',produitRoute)
 app.use('/api/sinistres', sinistreRoute); 
 app.use('/api/quittance', quittanceRoute); 
-app.use('/api/chat', chatRoute); 
+app.use('/chat', chatRoute); 
 app.get('/share', (req, res) => {
 const client = req.query.Client;
 

@@ -4,9 +4,9 @@ const chatController = require('../controllers/chatController');
 const tokenVerif = require('../../middleware/tokenVerification')
 
 
-router.post('/create',tokenVerif.requireAuth, chatController.createNewChat)
+router.post('/create',tokenVerif.verifyToken, chatController.createNewChat)
 
-router.get('/',tokenVerif.requireAuth,chatController.getUserChats)
+router.get('/',tokenVerif.verifyToken,chatController.getUserChats)
 
 router.post('/add',chatController.add);
 
