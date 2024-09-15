@@ -1,188 +1,123 @@
-const Chat = require("../../Shema/Chat.js"); 
-const User = require('../../Shema/User.js')
-// l'agent peux ajouter des question reponse 
-async function createNewChat(req, res) {
+const Group = require("../../Shema/Group");
+const Message = require("../../Shema/Message");
+const Participant = require("../../Shema/Participant");
+const { getUserIdAfterVerifyToken } = require("../../utils/utils");
+
+const createGroup = async (req, res) => {
   try {
-      const user = req.user;
-      let chat = req.body;
-      chat.owner = user.email;
+    const { label } = req.body;
+    const user = await getUserIdAfterVerifyToken(req);
+    const userId = user._id;
+    const existingGroup = await Group.findOne({ label, owner: userId });
 
-      if (chat.type) {
-          chat.type = chat.type.toLowerCase() === 'single' ? 'Single' : 'Group';
-      } else {
-          chat.type = 'Group';
-      }
-
-      let participantsById = [];
-      for (const p of chat.participants) {
-          if (p) {
-              const u = await User.findOne({ email: p });
-              if (u) {
-                  participantsById.push(u._id);
-              } else {
-                  console.log(`User not found for email: ${p}`);
-              }
-          }
-      }
-      participantsById.push(user._id);
-
-      chat.participants = participantsById;
-
-      const c = await Chat.create(chat);
-      res.status(200).json(c);
-  } catch (e) {
-      console.log(e.message);
-      res.status(400).json({ error: e.message });
-  }
-}
-
-async function toggleSelected(chat,chats) {
-  try {
-      const ch = chats.find((c) => c.selected);
-      if(ch){
-          ch.selected = false;
-          await Chat.findByIdAndUpdate(ch._id, ch);
-      }
-
-      chat.selected = true;
-      await Chat.findByIdAndUpdate(chat._id, chat);
-  }catch (e){
-      console.log("ToggleSelected has an error :  ",e.message);
-  }
-
-}
-
-async function getUserChats(req, res) {
-  try {
-      const user = req.user;
-      const allChats = await Chat.find().populate('participants', 'avatar email').populate('messages.sender', 'avatar email');
-      const chats = allChats.filter(chat => chat.participants.some(participant => participant.equals(user._id)));
-      chats.sort((a, b) => {
-          if (a.messages.length !== 0 && b.messages.length !== 0) {
-              const lastMessageA = a.messages[a.messages.length - 1];
-              const lastMessageB = b.messages[b.messages.length - 1];
-              return new Date(lastMessageB.timestamp) - new Date(lastMessageA.timestamp);
-          } else {
-              return false;
-          }
-      });
-      res.status(200).json(chats);
-  } catch (e) {
-      res.status(400).json({ error: e.message });
-  }
-}
-
-
-async function sendMessage (io,data){
-  try{
-      const {message,chat,senderEmail,timestamp,avatar}=data;
-      const user = await User.findOne({email:senderEmail});
-      const chatToUpdate = await Chat.findById(chat);
-      const sender = user._id;
-      const newMessage = {
-          message : message,
-          sender:sender,
-          senderEmail:senderEmail,
-          timestamp:timestamp,
-          avatar: avatar,
-      }
-      chatToUpdate.messages.push(newMessage);
-      chatToUpdate.selected = true;
-      await Chat.findByIdAndUpdate(chat,chatToUpdate);
-      const final = await Chat.findById(chat);
-      io.emit('received',final);
-  } catch (err){
-      console.log('error:',err.message)
-  }
-}
-async function test (io){
-  try{
-      io.emit('sent','Hello again!')
-  } catch (err){
-      console.log('error:',err.message)
-  }
-}
-
-
-// ====================================================================================
-//  ===================================== CRUD =======================================
-// ====================================================================================
-
-async function add (req,res){
-  try{
-  const chat= new Chat(req.body)
-  await chat.save();
-  res.status(200).send("Add");
-  } catch (err){
-      res.status(400).json({error:err})
-  }
-}
-
-async function getall(req, res) {
-  try {
-      const chats = await Chat.find().populate('participants', 'avatar email').populate('messages.sender', 'avatar email');
-      res.status(200).json(chats);
+    if (existingGroup) {
+      return res.status(400).json({ error: "Group name must be unique" });
+    }
+    const newGroup = await new Group({ label, owner: userId }).save();
+    res.status(201).json(newGroup);
   } catch (error) {
-      console.error('Error fetching chats:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error });
   }
-}
+};
+const getListGroup = async (req, res) => {
+  try {
+    const user = await getUserIdAfterVerifyToken(req);
+    const userId = user._id;
+    const groupList = await Group.find({});
+    const groupParticipation = await Promise.all(
+      groupList.map(async (group) => {
+        const isParticipant = await Participant.find({
+          user_id: userId,
+          group_id: group._id,
+        });
 
-async function getbyid (req,res){
-  try{
-      const data = await Chat.findById(req.params.id)
-      res.status(200).send(data)
+        return {
+          _id: group._id,
+          label: group.label,
+          owner: group.owner,
+          participant_id:
+            isParticipant?.length > 0 ? isParticipant[0]?._id : null,
+        };
+      })
+    );
 
-
-  }catch(err){
-      res.status(400).json({error:err});
-
-
+    res.status(200).json(groupParticipation);
+  } catch {
+    res.status(500).json({ error });
   }
+};
+const deleteGroup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedGroup = await Group.findByIdAndDelete(id);
 
-}
-
-async function getbyname (req,res){
-  try{
-      let name=req.params.nameClass
-      //toujours avec {} pour connaitre les parametres seulement l id le connait
-      const data = await Chat.findOne({name});
-      res.status(200).send(data)
-
-
-  }catch(err){
-      res.status(400).json({error:err});
-
-
+    res.status(200).json("The group is deleted successfully.");
+  } catch {
+    res.status(500).json({ error });
   }
+};
+const joinGroup = async (req, res) => {
+  try {
+    const { groupId } = req.body;
+    const user = await getUserIdAfterVerifyToken(req);
+    const userId = user._id;
+    const existingJoinGroup = await Participant.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
 
-}
-
-
-async function update (req,res){
-  try{
-      await Chat.findByIdAndUpdate(req.params.id,req.body)
-      res.status(200).send('updated')
-
-  }catch(err){
-      res.status(400).json({error:err});
-
-
+    if (existingJoinGroup) {
+      return res
+        .status(400)
+        .json({ error: "You are arredy  join to  this group" });
+    }
+    const newParticipant = await new Participant({
+      group_id: groupId,
+      user_id: userId,
+    }).save();
+    res.status(201).json(newParticipant);
+  } catch (error) {
+    res.status(500).json({ error });
   }
+};
+const leaveGroup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedPaticipantGroup = await Participant.findByIdAndDelete(id);
 
-}
-
-async function deletechat (req,res){
-  try{
-      await Chat.findByIdAndDelete(req.params.id)
-      res.status(200).send('deleted')
-
-  }catch(err){
-      res.status(400).json({error:err});
-
-
+    res.status(200).json("You  are leave The group  successfully.");
+  } catch {
+    res.status(500).json({ error });
   }
+};
 
-}
+const getlistMessageByGroupId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const getListOfMessage = await Message.find({ group_id: id });
 
-module.exports={add,getall,getbyid,getbyname,update,deletechat,test,createNewChat,getUserChats,sendMessage}
+    res.status(200).json(getListOfMessage);
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
+const sendMessageInGroup = async (req, res) => {
+  try {
+    const data = req.body;
+
+    const createMessage = await new Message(data);
+    createMessage.save();
+    res.status(200).json(createMessage);
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
+module.exports = {
+  createGroup,
+  getListGroup,
+  deleteGroup,
+  joinGroup,
+  leaveGroup,
+  getlistMessageByGroupId,
+  sendMessageInGroup,
+};

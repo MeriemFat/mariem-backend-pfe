@@ -4,20 +4,26 @@ const chatController = require('../controllers/chatController');
 const tokenVerif = require('../../middleware/tokenVerification')
 
 
-router.post('/create',tokenVerif.verifyToken, chatController.createNewChat)
+router.post('/group/create',tokenVerif.verifyToken, chatController.createGroup)
 
-router.get('/',tokenVerif.verifyToken,chatController.getUserChats)
+router.get('/group',tokenVerif.verifyToken,chatController.getListGroup)
 
-router.post('/add',chatController.add);
 
-router.get('/getall',chatController.getall);
+router.delete('/group/:id',chatController.deleteGroup);
 
-router.get('/getbyid/:id',chatController.getbyid);
+router.post('/participant',chatController.joinGroup);
 
-router.get('/getbyname/:name',chatController.getbyname);
+router.delete('/participant/:id',chatController.leaveGroup);
 
-router.put('/update/:id',chatController.update);
 
-router.delete('/delete/:id',chatController.deletechat);
+router.get('/messages/:id',chatController.getlistMessageByGroupId);
+
+router.post('/message',chatController.sendMessageInGroup);
+
+// router.get('/getbyname/:name',chatController.getbyname);
+
+// router.put('/update/:id',chatController.update);
+
+
 
 module.exports = router;
