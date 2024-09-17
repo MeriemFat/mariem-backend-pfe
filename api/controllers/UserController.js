@@ -537,12 +537,13 @@ const updateUserProfile = async (req, res) => {
     res.status(401).json({ error: err.message });
   }
 };
-const getProfileByCodeAgent = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
-    const { codeAgent } = req.query;
+    const userinfo = await getUserIdAfterVerifyToken(req);
+    const userId = userinfo._id;
 
     // Chercher l'utilisateur par codeAgent
-    const user = await User.findOne({ codeAgent });
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -848,7 +849,7 @@ module.exports = {
   checkemail,
   toggleBlockUser,
   updateUserProfile,
-  getProfileByCodeAgent,
+  getProfile,
   updateProfile,
   getUserRoleRequest,
   getRoleRequests,

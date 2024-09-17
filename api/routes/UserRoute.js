@@ -29,7 +29,7 @@ router.get('/getUserByCodeClient/:codeClient', async (req, res) => {
   router.get('/getAllusers', UserController.getAllUser);
   router.post('/checkEmail', UserController.checkemail);
   router.put('/profile',tokenVerif.authenticate,UserController.updateProfile);
-  router.get('/getProfile',UserController.getProfileByCodeAgent);
+  router.get('/getProfile',UserController.getProfile);
   router.get('/requests',UserController.getRoleRequests);
   router.put('/accept',tokenVerif.requireAdmin,UserController.acceptRoleRequest);
   router.put('/reject',tokenVerif.requireAdmin,UserController.rejectRoleRequest);
